@@ -174,11 +174,15 @@ def get_claude_response(conversation_history, system_prompt):
         "system": system_prompt,
         "messages": conversation_history
     }
-    res = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
-    if res.status_code == 200:
-        return res.json()["content"][0]["text"]
+res = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
+if res.status_code == 200:
+    data = res.json()
+    if "content" in data and isinstance(data["content"], list) and len(data["content"]) > 0:
+        return data["content"][0].get("text", "")
     else:
-        return f"❌ Claude API 오류: {res.status_code} - {res.text}"
+        return "❌ Claude API 응답이 비어 있음"
+else:
+    return f"❌ Claude API 오류: {res.status_code} - {res.text}"
 
 def send_email_with_attachment(file, subject, body, filename):
     msg = EmailMessage()
