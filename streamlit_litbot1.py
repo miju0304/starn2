@@ -174,17 +174,23 @@ def get_claude_response(conversation_history, system_prompt):
         "system": system_prompt,
         "messages": conversation_history
     }
-res = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
-if res.status_code == 200:
-    data = res.json()
-    if "content" in data and isinstance(data["content"], list) and len(data["content"]) > 0:
-        return data["content"][0].get("text", "")
-    else:
-        return "❌ Claude API 응답이 비어 있음"
-else:
-    return f"❌ Claude API 오류: {res.status_code} - {res.text}"
+def get_claude_response(messages, prompt):
+    data = {
+        "model": "claude-3-opus-20240229",
+        "max_tokens": 1000,
+        "messages": messages + [{"role": "user", "content": prompt}],
+    }
+    res = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
 
-def send_email_with_attachment(file, subject, body, filename):
+    if res.status_code == 200:
+        data = res.json()
+        if "content" in data and isinstance(data["content"], list) and len(data["content"]) > 0:
+            return data["content"][0].get("text", "")
+        else:
+            return "❌ Claude API 응답이 비어 있음"
+    else:
+        return f"❌ Claude API 오류: {res.status_code} - {res.text}"
+
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = st.secrets["email"]["user"]
