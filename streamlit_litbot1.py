@@ -6,6 +6,39 @@ import smtplib
 import requests
 import time
 import fitz  # PyMuPDF
+def send_email_with_attachment(file, subject, body, filename):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = st.secrets["email"]["user"]
+    msg["To"] = "mveishu@gmail.com"
+    msg.set_content(body)
+
+    file_bytes = file.read()
+    msg.add_attachment(
+        file_bytes,
+        maintype="application",
+        subtype="octet-stream",
+        filename=filename
+    )
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(st.secrets["email"]["user"], st.secrets["email"]["password"])
+        smtp.send_message(msg)
+
+    # 파일 포인터 복구 (다시 쓸 수 있게)
+    try:
+        file.seek(0)
+    except Exception:
+        pass
+def extract_text_from_pdf(uploaded_file):
+    import fitz  # PyMuPDF
+    text = []
+    with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+        for page in doc:
+            text.append(page.get_text())
+    uploaded_file.seek(0)  # 파일 포인터 초기화
+    return "\n".join(text)
+
 
 
 def check_inappropriate_content(user_message):
